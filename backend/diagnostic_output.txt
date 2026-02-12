@@ -1,0 +1,14 @@
+Total products: 7
+[1] Name: Tomato, Farmer: karthikeyan, Price: 30.00, Stock: 10
+[2] Name: Onion, Farmer: karthikeyan, Price: 28.00, Stock: 15
+[3] Name: Potato, Farmer: karthikeyan, Price: 35.00, Stock: 8
+[4] Name: Carrot, Farmer: karthikeyan, Price: 25.00, Stock: 10
+[5] Name: Garlic, Farmer: karthikeyan, Price: 80.00, Stock: 17
+[6] Name: ladies finger, Farmer: karthikeyan, Price: 28.00, Stock: 7
+[7] Name: radish, Farmer: karthikeyan, Price: 28.00, Stock: 15
+
+Total users: 4
+[1] Username: admin, Role: BUYER
+[2] Username: new_user2, Role: BUYER
+[3] Username: karthikeyan, Role: FARMER
+[4] Username: krishna, Role: BUYER
