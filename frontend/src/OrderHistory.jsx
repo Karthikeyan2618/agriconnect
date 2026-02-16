@@ -62,7 +62,7 @@ function OrderHistory() {
                                     </p>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <Badge color={getStatusColor(order.status)}>{order.status.replace(/_/g, ' ')}</Badge>
+                                    <Badge color={getStatusColor(order.status)}>{(order.status || 'PENDING').replace(/_/g, ' ')}</Badge>
                                     <button
                                         className="btn"
                                         style={{ border: '1px solid #e2e8f0', background: 'white', padding: '0.5rem 1rem' }}

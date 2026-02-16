@@ -10,6 +10,7 @@ import './index.css';
 
 function Navbar({ cartCount }) {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [username, setUsername] = useState(null);
   const [role, setRole] = useState(null);
   const navigate = useNavigate();
@@ -30,57 +31,49 @@ function Navbar({ cartCount }) {
     localStorage.removeItem('role');
     setUsername(null);
     setRole(null);
+    hideMenu();
     navigate('/login');
   };
 
+  const menuToggle = () => setMobileMenuOpen(!mobileMenuOpen);
+  const hideMenu = () => setMobileMenuOpen(false);
+
   return (
-    <nav className={scrolled ? 'scrolled glass-panel' : ''} style={{ display: 'flex', justifyContent: 'center' }}>
-      <div className="container nav-content" style={{ display: 'flex', width: '100%', justifyContent: 'space-between', alignItems: 'center', padding: '0 2rem' }}>
-        <Link to="/" className="logo">
+    <nav className={scrolled ? 'scrolled glass-panel' : ''}>
+      <div className="container nav-content">
+        <Link to="/" className="logo" onClick={hideMenu}>
           🌱 Agriconnect
         </Link>
-        <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'center' }}>
-          <Link to="/" style={{ textDecoration: 'none', color: 'var(--dark)', fontWeight: 600, fontSize: '1.05rem' }}>Home</Link>
+        <button className="mobile-toggle" onClick={menuToggle}>
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+        <div className={`nav-menu ${mobileMenuOpen ? 'active' : ''}`}>
+          <Link to="/" className="nav-link" onClick={hideMenu}>Home</Link>
           {role === 'FARMER' ? (
-            <Link to="/dashboard" style={{ textDecoration: 'none', color: 'var(--dark)', fontWeight: 600, fontSize: '1.05rem' }}>Dashboard</Link>
+            <Link to="/dashboard" className="nav-link" onClick={hideMenu}>Dashboard</Link>
           ) : (
-            <Link to="/products" style={{ textDecoration: 'none', color: 'var(--dark)', fontWeight: 600, fontSize: '1.05rem' }}>Marketplace</Link>
+            <Link to="/products" className="nav-link" onClick={hideMenu}>Marketplace</Link>
           )}
           {role === 'BUYER' && (
-            <Link to="/orders" style={{ textDecoration: 'none', color: 'var(--dark)', fontWeight: 600, fontSize: '1.05rem' }}>Orders</Link>
+            <Link to="/orders" className="nav-link" onClick={hideMenu}>Orders</Link>
           )}
           {role !== 'FARMER' && (
-            <Link to="/cart" style={{ textDecoration: 'none', color: 'var(--dark)', fontWeight: 600, fontSize: '1.05rem', position: 'relative' }}>
+            <Link to="/cart" className="nav-link" onClick={hideMenu}>
               Cart
               {cartCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-18px',
-                  background: 'var(--accent)',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '18px',
-                  height: '18px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '0.65rem',
-                  fontWeight: '800',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                }}>
+                <span className="cart-badge">
                   {cartCount}
                 </span>
               )}
             </Link>
           )}
           {username ? (
-            <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', marginLeft: '1rem' }}>
-              <span style={{ fontWeight: 700, color: 'var(--primary-dark)' }}>Hi, {username}</span>
-              <button onClick={handleLogout} className="btn" style={{ background: 'white', border: '1.5px solid var(--primary)', color: 'var(--primary)', padding: '0.5rem 1.25rem' }}>Logout</button>
+            <div className="user-section">
+              <span className="user-greeting">Hi, {username}</span>
+              <button onClick={handleLogout} className="btn logout-btn">Logout</button>
             </div>
           ) : (
-            <Link to="/login" className="btn btn-primary" style={{ padding: '0.6rem 1.5rem', marginLeft: '1rem' }}>Login</Link>
+            <Link to="/login" className="btn btn-primary" onClick={hideMenu}>Login</Link>
           )}
         </div>
       </div>
@@ -119,7 +112,7 @@ function Features() {
 function Footer() {
   return (
     <footer style={{ padding: '4rem 0', background: 'var(--dark)', color: 'white' }}>
-      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '2rem' }}>
         <div>
           <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary-light)', marginBottom: '0.5rem' }}>🌱 Agriconnect</h2>
           <p style={{ color: '#94a3b8' }}>Modernizing the roots of our world.</p>

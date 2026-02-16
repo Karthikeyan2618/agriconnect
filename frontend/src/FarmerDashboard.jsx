@@ -8,7 +8,7 @@ const InventoryManagement = ({
 }) => (
     <div id="products-section" style={{ marginBottom: '5rem' }}>
         <h2 className="section-header-accent">Inventory Management</h2>
-        <div className="grid-cols-2" style={{ gridTemplateColumns: '1fr 1.5fr' }}>
+        <div className="grid-cols-2">
             <Card padding="2rem">
                 <h3 style={{ marginBottom: '1.5rem', color: 'var(--primary-dark)' }}>
                     {editingProduct ? 'Edit Product' : 'Add New Product'}
@@ -23,7 +23,44 @@ const InventoryManagement = ({
                     </div>
 
 
-                    <InputGroup label="Image URL" value={productState.imageUrl} onChange={(e) => setProductState({ ...productState, imageUrl: e.target.value })} placeholder="/images/tomatoes.png" />
+                    <div className="grid-cols-2" style={{ gap: '1rem' }}>
+                        <InputGroup label="Crop Type" value={productState.cropType} onChange={(e) => setProductState({ ...productState, cropType: e.target.value })} placeholder="e.g. Organic Tomatoes" />
+                        <InputGroup label="Harvest Date" type="date" value={productState.harvestDate} onChange={(e) => setProductState({ ...productState, harvestDate: e.target.value })} />
+                    </div>
+
+                    <div className="grid-cols-2" style={{ gap: '1rem', alignItems: 'end' }}>
+                        <InputGroup label="Latitude" type="number" step="0.000001" value={productState.latitude} onChange={(e) => setProductState({ ...productState, latitude: e.target.value })} />
+                        <InputGroup label="Longitude" type="number" step="0.000001" value={productState.longitude} onChange={(e) => setProductState({ ...productState, longitude: e.target.value })} />
+                    </div>
+                    <button
+                        type="button"
+                        className="btn"
+                        style={{ width: '100%', marginBottom: '1rem', fontSize: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}
+                        onClick={() => {
+                            if (navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition((pos) => {
+                                    setProductState({
+                                        ...productState,
+                                        latitude: pos.coords.latitude.toFixed(6),
+                                        longitude: pos.coords.longitude.toFixed(6)
+                                    });
+                                });
+                            }
+                        }}
+                    >
+                        📍 Use My Current Location
+                    </button>
+
+                    <div className="form-group">
+                        <label>Product Image</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="form-input"
+                            onChange={(e) => setProductState({ ...productState, imageFile: e.target.files[0] })}
+                        />
+                        <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>Upload a PNG or JPG image</p>
+                    </div>
 
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button type="submit" className="btn btn-primary" style={{ flex: 2 }}>{editingProduct ? 'Update' : 'Add Product'}</button>
@@ -38,7 +75,7 @@ const InventoryManagement = ({
                     <div style={{ display: 'grid', gap: '1rem' }}>
                         {products.map(p => (
                             <Card key={p.id} padding="1rem" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                <img src={p.image_url || 'https://via.placeholder.com/60'} alt="" style={{ width: '60px', height: '60px', borderRadius: '0.5rem', objectFit: 'cover' }} />
+                                <img src={p.image || 'https://via.placeholder.com/60'} alt="" style={{ width: '60px', height: '60px', borderRadius: '0.5rem', objectFit: 'cover' }} />
                                 <div style={{ flex: 1 }}>
                                     <h4 style={{ margin: 0 }}>{p.name}</h4>
                                     <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>₹{p.price} | {p.stock}kg</p>
@@ -54,7 +91,7 @@ const InventoryManagement = ({
     </div>
 );
 
-const FarmProfileSection = ({ landSize, setLandSize, location, setLocation, soilType, setSoilType, onUpdate }) => (
+const FarmProfileSection = ({ landSize, setLandSize, location, setLocation, soilType, setSoilType, profileState, setProfileState, onUpdate }) => (
     <div id="profile-section" style={{ marginBottom: '5rem' }}>
         <h2 className="section-header-accent">Farm Profile</h2>
         <Card style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -62,6 +99,28 @@ const FarmProfileSection = ({ landSize, setLandSize, location, setLocation, soil
             <form onSubmit={onUpdate}>
                 <InputGroup label="Land Size (Acres)" type="number" step="0.1" value={landSize} onChange={(e) => setLandSize(e.target.value)} required />
                 <InputGroup label="Location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Enter your farm location" />
+                <div className="grid-cols-2" style={{ gap: '1rem' }}>
+                    <InputGroup label="Latitude" type="number" step="0.000001" value={profileState.latitude} onChange={(e) => setProfileState({ ...profileState, latitude: e.target.value })} />
+                    <InputGroup label="Longitude" type="number" step="0.000001" value={profileState.longitude} onChange={(e) => setProfileState({ ...profileState, longitude: e.target.value })} />
+                </div>
+                <button
+                    type="button"
+                    className="btn"
+                    style={{ width: '100%', marginBottom: '1.5rem', fontSize: '0.85rem', background: '#f8fafc', border: '1px solid #e2e8f0' }}
+                    onClick={() => {
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition((pos) => {
+                                setProfileState({
+                                    ...profileState,
+                                    latitude: pos.coords.latitude.toFixed(6),
+                                    longitude: pos.coords.longitude.toFixed(6)
+                                });
+                            });
+                        }
+                    }}
+                >
+                    📍 Set Current Location
+                </button>
                 <InputGroup label="Soil Type" isSelect value={soilType} onChange={(e) => setSoilType(e.target.value)}>
                     <option value="">Select Soil Type</option>
                     <option value="SILT">Silt</option>
@@ -80,7 +139,7 @@ const FarmProfileSection = ({ landSize, setLandSize, location, setLocation, soil
 const CropCalendarSection = ({ cropPlans, onAdd, state, setState }) => (
     <div id="calendar-section" style={{ marginBottom: '2rem' }}>
         <h2 className="section-header-accent">Crop Calendar</h2>
-        <div className="grid-cols-2" style={{ gridTemplateColumns: '1fr 1.5fr' }}>
+        <div className="grid-cols-2">
             <Card padding="2.5rem">
                 <h3 style={{ marginBottom: '1.5rem' }}>New Crop Plan</h3>
                 <form onSubmit={onAdd}>
@@ -130,10 +189,11 @@ function FarmerDashboard() {
     const [editingProduct, setEditingProduct] = useState(null);
 
     const [productState, setProductState] = useState({
-        name: '', description: '', price: '', stock: '', imageUrl: ''
+        name: '', description: '', price: '', stock: '', imageUrl: '', imageFile: null,
+        cropType: '', harvestDate: '', latitude: '', longitude: ''
     });
 
-    const [profileState, setProfileState] = useState({ landSize: '', location: '', soilType: '' });
+    const [profileState, setProfileState] = useState({ landSize: '', location: '', soilType: '', latitude: '', longitude: '' });
     const [cropPlans, setCropPlans] = useState([]);
     const [calendarState, setCalendarState] = useState({ cropVariety: '', plantingDate: '', harvestDate: '' });
     // Add missing orders state
@@ -145,21 +205,30 @@ function FarmerDashboard() {
     }, []);
 
     const fetchData = async () => {
+        setLoading(true);
         try {
-            const [prodRes, profRes, planRes, ordRes] = await Promise.all([
+            // Use allSettled to be resilient if one endpoint fails
+            const results = await Promise.allSettled([
                 api.get('products/?role=FARMER'),
                 api.get('profile/'),
                 api.get('crop-plans/'),
                 api.get('orders/')
             ]);
-            setProducts(prodRes.data);
-            setProfileState({
-                landSize: profRes.data.land_size || '',
-                location: profRes.data.location || '',
-                soilType: profRes.data.soil_type || ''
-            });
-            setCropPlans(planRes.data);
-            setOrders(ordRes.data);
+
+            if (results[0].status === 'fulfilled') setProducts(results[0].value.data);
+            if (results[1].status === 'fulfilled') {
+                const prof = results[1].value.data;
+                setProfileState({
+                    landSize: prof.land_size || '',
+                    location: prof.location || '',
+                    soilType: prof.soil_type || '',
+                    latitude: prof.latitude || '',
+                    longitude: prof.longitude || ''
+                });
+            }
+            if (results[2].status === 'fulfilled') setCropPlans(results[2].value.data);
+            if (results[3].status === 'fulfilled') setOrders(results[3].value.data);
+
             setLoading(false);
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
@@ -173,7 +242,9 @@ function FarmerDashboard() {
             await api.put('profile/', {
                 land_size: profileState.landSize,
                 location: profileState.location,
-                soil_type: profileState.soilType
+                soil_type: profileState.soilType,
+                latitude: profileState.latitude,
+                longitude: profileState.longitude
             });
             setMessage('Profile updated successfully!');
             setTimeout(() => setMessage(''), 3000);
@@ -185,19 +256,30 @@ function FarmerDashboard() {
     const handleProductSubmit = async (e) => {
         e.preventDefault();
         try {
-            const payload = {
-                name: productState.name,
-                description: productState.description,
-                price: productState.price,
-                stock: productState.stock,
-                image_url: productState.imageUrl || null
+            const formData = new FormData();
+            formData.append('name', productState.name);
+            formData.append('description', productState.description);
+            formData.append('price', productState.price);
+            formData.append('stock', productState.stock);
+            formData.append('crop_type', productState.cropType);
+            formData.append('harvest_date', productState.harvestDate);
+
+            if (productState.imageFile) {
+                formData.append('image', productState.imageFile);
+            }
+
+            if (productState.latitude) formData.append('latitude', productState.latitude);
+            if (productState.longitude) formData.append('longitude', productState.longitude);
+
+            const config = {
+                headers: { 'Content-Type': 'multipart/form-data' }
             };
 
             if (editingProduct) {
-                await api.put(`products/${editingProduct.id}/`, payload);
+                await api.put(`products/${editingProduct.id}/`, formData, config);
                 setMessage('Product updated successfully!');
             } else {
-                await api.post('products/', payload);
+                await api.post('products/', formData, config);
                 setMessage('Product added successfully!');
             }
 
@@ -205,6 +287,7 @@ function FarmerDashboard() {
             fetchData();
             setTimeout(() => setMessage(''), 3000);
         } catch (err) {
+            console.error('Save product error:', err);
             setMessage('Failed to save product.');
         }
     };
@@ -233,14 +316,21 @@ function FarmerDashboard() {
             description: product.description,
             price: product.price,
             stock: product.stock,
-            imageUrl: product.image_url || ''
+            imageUrl: product.image_url || '',
+            cropType: product.crop_type || '',
+            harvestDate: product.harvest_date || '',
+            latitude: product.latitude || '',
+            longitude: product.longitude || ''
         });
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const resetProductForm = () => {
         setEditingProduct(null);
-        setProductState({ name: '', description: '', price: '', stock: '', imageUrl: '' });
+        setProductState({
+            name: '', description: '', price: '', stock: '', imageUrl: '', imageFile: null,
+            cropType: '', harvestDate: '', latitude: '', longitude: ''
+        });
     };
 
     const handleDeleteProduct = async (id) => {
@@ -266,7 +356,7 @@ function FarmerDashboard() {
     return (
         <div className="container" style={{ paddingBottom: '60px' }}>
             <SectionHeader
-                badge="Farmer Dashboard"
+                badge="                             "
                 title="Operational Excellence"
                 subtitle="Manage your inventory, optimize your farm, and track your harvest."
             />
@@ -302,6 +392,8 @@ function FarmerDashboard() {
                 setLocation={(v) => setProfileState({ ...profileState, location: v })}
                 soilType={profileState.soilType}
                 setSoilType={(v) => setProfileState({ ...profileState, soilType: v })}
+                profileState={profileState}
+                setProfileState={setProfileState}
                 onUpdate={handleUpdateProfile}
             />
 
@@ -324,7 +416,7 @@ function FarmerDashboard() {
                             <Card key={order.id} padding="1.5rem">
                                 <div className="flex-between">
                                     <h3>Order #{order.id} <span style={{ fontSize: '0.9rem', color: '#64748b' }}>by {order.buyer_name}</span></h3>
-                                    <Badge color="var(--accent)">{order.status.replace('_', ' ')}</Badge>
+                                    <Badge color="var(--accent)">{(order.status || 'PENDING').replace(/_/g, ' ')}</Badge>
                                 </div>
                                 <div style={{ margin: '1rem 0' }}>
                                     {order.items.map((item, idx) => (

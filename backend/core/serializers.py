@@ -5,7 +5,7 @@ from .models import Product, Profile, CropPlan
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['land_size', 'location', 'soil_type']
+        fields = ['land_size', 'location', 'soil_type', 'latitude', 'longitude']
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.CharField(write_only=True, required=False)
@@ -25,6 +25,8 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class ProductSerializer(serializers.ModelSerializer):
+    farmer_location = serializers.ReadOnlyField(source='farmer.profile.location')
+
     class Meta:
         model = Product
         fields = '__all__'

@@ -8,6 +8,19 @@ from .serializers import UserSerializer, ProductSerializer, ProfileSerializer, C
 from .utils import generate_invoice_pdf
 from django.http import HttpResponse
 from rest_framework.decorators import action
+import math
+
+def haversine(lat1, lon1, lat2, lon2):
+    # Radius of the Earth in km
+    R = 6371.0
+    
+    dlat = math.radians(lat2 - lat1)
+    dlon = math.radians(lon2 - lon1)
+    
+    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    
+    return R * c
 
 class SignupView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -48,10 +61,61 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Product.objects.all()
-        role = self.request.query_params.get('role', None)
-        if role == 'FARMER' and self.request.user.is_authenticated:
-            return queryset.filter(farmer=self.request.user)
-        return queryset.exclude(farmer__isnull=True)
+        
+        # Base filtering:
+        # 1. If role=FARMER param is passed (Dashboard fetch), show user's own products
+        # 2. If user is a FARMER role, they should also only see their own products in the marketplace to avoid confusion (My Store view)
+        # 3. Otherwise (Buyers/Guests), show products from verified farmers.
+        
+        is_farmer = False
+        if self.request.user.is_authenticated:
+            try:
+                is_farmer = (self.request.user.profile.role == 'FARMER')
+            except:
+                pass
+
+        if is_farmer:
+            queryset = queryset.filter(farmer=self.request.user)
+        else:
+            queryset = queryset.filter(farmer__profile__role='FARMER')
+
+        # Additional Filters
+        crop_type = self.request.query_params.get('crop_type', None)
+        if crop_type:
+            queryset = queryset.filter(crop_type__icontains=crop_type)
+
+        harvest_date = self.request.query_params.get('harvest_date', None)
+        if harvest_date:
+            queryset = queryset.filter(harvest_date=harvest_date)
+
+        max_distance = self.request.query_params.get('max_distance', None)
+        if max_distance and self.request.user.is_authenticated:
+            try:
+                max_dist = float(max_distance)
+                buyer_profile = self.request.user.profile
+                if buyer_profile.latitude is not None and buyer_profile.longitude is not None:
+                    # Filter in-memory for distance
+                    filtered_ids = []
+                    for product in queryset:
+                        # Priority: Product coordinates > Farmer Profile coordinates
+                        if product.latitude is not None and product.longitude is not None:
+                            p_lat, p_lon = product.latitude, product.longitude
+                        elif product.farmer and hasattr(product.farmer, 'profile') and product.farmer.profile.latitude is not None:
+                            p_lat, p_lon = product.farmer.profile.latitude, product.farmer.profile.longitude
+                        else:
+                            continue
+
+                        dist = haversine(
+                            buyer_profile.latitude, buyer_profile.longitude,
+                            p_lat, p_lon
+                        )
+                        if dist <= max_dist:
+                            filtered_ids.append(product.id)
+                    queryset = queryset.filter(id__in=filtered_ids)
+            except (ValueError, TypeError, AttributeError):
+                pass
+
+        return queryset
 
 class CropPlanViewSet(viewsets.ModelViewSet):
     queryset = CropPlan.objects.all()
@@ -104,18 +168,21 @@ class OrderViewSet(viewsets.ModelViewSet):
                 return Response({'error': f"Product {item['product_id']} not found"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Create Order
-        order = Order.objects.create(buyer=request.user, total_amount=total_amount)
+        try:
+            order = Order.objects.create(buyer=request.user, total_amount=total_amount)
 
-        # Create Items and Update Stock
-        for item in order_items:
-            OrderItem.objects.create(
-                order=order,
-                product=item['product'],
-                quantity=item['quantity'],
-                price=item['price']
-            )
-            item['product'].stock -= item['quantity']
-            item['product'].save()
+            # Create Items and Update Stock
+            for item in order_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item['product'],
+                    quantity=item['quantity'],
+                    price=item['price']
+                )
+                item['product'].stock -= item['quantity']
+                item['product'].save()
+        except Exception as e:
+            return Response({'error': f"Failed to create order: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
